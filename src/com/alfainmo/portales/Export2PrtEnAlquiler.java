@@ -9,7 +9,6 @@ import com.alfainmo.extra.AlfaException;
 import com.alfainmo.extra.MyInmueblesAux;
 import com.alfainmo.util.BdUtils;
 import com.alfainmo.util.ConfigUtils;
-import com.alfainmo.util.FmtUtils;
 
 import java.io.IOException;
 import java.text.MessageFormat;
