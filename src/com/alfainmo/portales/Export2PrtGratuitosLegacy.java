@@ -8,6 +8,7 @@ import com.alfainmo.beans.MyInmuebleInfo;
 import com.alfainmo.extra.AlfaException;
 import com.alfainmo.extra.MyInmueblesAux;
 import com.alfainmo.util.BdUtils;
+import com.alfainmo.util.ConfigUtils;
 import com.alfainmo.util.FmtUtils;
 
 import java.io.IOException;
@@ -19,10 +20,12 @@ import java.util.List;
 public class Export2PrtGratuitosLegacy extends AbstractExport2PrtPago {
 
     private final MyInmueblesAux tbAux;
+    private final String pathImg;
 
     public Export2PrtGratuitosLegacy(BdUtils bdUtils, String pathDestino) throws AlfaException {
         super(bdUtils, pathDestino, "temp/alfainmo-inmuebles-legacy-old");
         this.tbAux = new MyInmueblesAux(bdUtils);
+        this.pathImg = ConfigUtils.getInstance().getString("pathImagenes");
     }
 
     public AbstractExport2Prt exportar() throws AlfaException {
@@ -122,9 +125,9 @@ public class Export2PrtGratuitosLegacy extends AbstractExport2PrtPago {
                 writer.write("<traspaso>0</traspaso>");
             }
 
-            writer.write(MessageFormat.format("<p_venta_act>{0}</p_venta_act>", inmuebleDb.getPrecio_venta()));
-            writer.write(MessageFormat.format("<p_alq_act>{0}</p_alq_act>", inmuebleDb.getPrecio_alquiler()));
-            writer.write(MessageFormat.format("<p_traspaso_act>{0}</p_traspaso_act>", inmuebleDb.getPrecio_traspaso()));
+            writer.write("<p_venta_act>" + Double.valueOf(inmuebleDb.getPrecio_venta()).longValue() + "</p_venta_act>");
+            writer.write("<p_alq_act>" + Double.valueOf(inmuebleDb.getPrecio_alquiler()).longValue() + "</p_alq_act>");
+            writer.write("<p_traspaso_act>" + Double.valueOf(inmuebleDb.getPrecio_traspaso()).longValue() + "</p_traspaso_act>");
             writer.write("<tipo_moneda>1</tipo_moneda>");
 
             String gastosComunidad = inmueble.getFieldValue("gastos_comunidad");
@@ -137,12 +140,18 @@ public class Export2PrtGratuitosLegacy extends AbstractExport2PrtPago {
                 }
             }
 
-            String anioConstruccion = inmueble.getFieldValue("anio_construccion");
+            String anioConstruccion = inmueble.getFieldValue("anio_construccion").trim();
             if (!anioConstruccion.isEmpty()) {
+
                 try {
-                    Integer iAnios = Calendar.getInstance().get(Calendar.YEAR) - Integer.parseInt(anioConstruccion);
-                    writer.write(MessageFormat.format("<annos>{0}</annos>", iAnios));
-                } catch (NumberFormatException e) {
+                    Integer iAnioConstruccion = Integer.parseInt(anioConstruccion);
+                    Integer iAnios = Calendar.getInstance().get(Calendar.YEAR) - iAnioConstruccion;
+                    if (iAnios < 200) {
+                        writer.write("<annos>" + iAnios + "</annos>");
+                    }
+
+                } catch(NumberFormatException e) {
+
                 }
             }
             writer.write(MessageFormat.format("<estado_conservacion>{0}</estado_conservacion>", estadoConservacion));
@@ -259,7 +268,7 @@ public class Export2PrtGratuitosLegacy extends AbstractExport2PrtPago {
             // Fotos
             writer.write("<Fotos>");
             for (MyImagenDb imagenDb : inmueble.getImagenes()) {
-                String img = "https://admin.alfainmo.com/img_es/" + imagenDb.getPath() + "/g_" + imagenDb.getFichero();
+                String img = pathImg + imagenDb.getPath() + "/g_" + imagenDb.getFichero();
                 writer.write(MessageFormat.format("<Foto>{0}</Foto>", img));
             }
             writer.write("</Fotos>");

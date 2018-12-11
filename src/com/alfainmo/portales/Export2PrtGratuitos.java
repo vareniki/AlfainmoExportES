@@ -8,6 +8,7 @@ import com.alfainmo.beans.MyInmuebleInfo;
 import com.alfainmo.extra.AlfaException;
 import com.alfainmo.extra.MyInmueblesAux;
 import com.alfainmo.util.BdUtils;
+import com.alfainmo.util.ConfigUtils;
 import com.alfainmo.util.FmtUtils;
 
 import java.io.IOException;
@@ -20,11 +21,13 @@ public class Export2PrtGratuitos extends AbstractExport2PrtPago {
 
     private final MyInmueblesAux tbAux;
     private final MyAgenciaDb agencia;
+    private final String pathImg;
 
     public Export2PrtGratuitos(BdUtils bdUtils, String pathDestino, MyAgenciaDb agencia) throws AlfaException {
         super(bdUtils, pathDestino, "temp/alfainmo-inmuebles-" + agencia.getNumero_agencia());
         this.tbAux = new MyInmueblesAux(bdUtils);
         this.agencia = agencia;
+        this.pathImg = ConfigUtils.getInstance().getString("pathImagenes");
     }
 
     public Export2PrtGratuitos exportar() throws AlfaException {
@@ -168,7 +171,7 @@ public class Export2PrtGratuitos extends AbstractExport2PrtPago {
             writer.write("<Fotos>");
             int nimg = 1;
             for (MyImagenDb imagenDb : inmueble.getImagenes()) {
-                String img = "https://admin.alfainmo.com/img_es/" + imagenDb.getPath() + "/g_" + imagenDb.getFichero();
+                String img = pathImg + imagenDb.getPath() + "/g_" + imagenDb.getFichero();
 
                 writer.write(MessageFormat.format("<Foto{0}>{1}</Foto{2}>", nimg, img, nimg));
 

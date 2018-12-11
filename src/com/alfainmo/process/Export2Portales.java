@@ -28,17 +28,27 @@ public class Export2Portales {
     public void exportarInmuebles() throws AlfaException {
 
         // Exporta inmuebles a Pisos.com
-        System.out.println("Exportando todos los inmuebles a Pisos.com...");
+        System.out.println("Exportando inmuebles a Pisos.com...");
 
         Export2PrtPisosCom exportarPisos = new Export2PrtPisosCom(bdUtils, portalesPath);
         exportarPisos.exportar();
 
-        // Exporta a Idealista
-        System.out.println("Exportando todos los inmuebles a Idealista...");
+        // Exporta inmuebles a Pisos.com multiagencia
+        System.out.println("Exportando inmuebles a Pisos.com multiagencia...");
+
+        Export2PrtPisosComMA exportarPisosMA = new Export2PrtPisosComMA(bdUtils, portalesPath);
+        exportarPisosMA.exportar();
+
+        //
+        // Exporta a IDEALISTA
+        //
+        System.out.println("Exportando inmuebles a Idealista...");
         Export2PrtIdealista exportarIdealista = new Export2PrtIdealista(bdUtils, portalesPath);
         String ficheroIdealista = exportarIdealista.exportar().generarZip();
 
-        // Exporta las agencias
+        //
+        // Exporta las AGENCIAS
+        //
         System.out.println("Exportando agencias...");
 
         List<String> genericoZip = new ArrayList<>();
@@ -48,8 +58,10 @@ public class Export2Portales {
 
         ConvertUtils.generarZip(genericoZip, portalesPath + "/alfainmo-agencias.zip");
 
-        // Exporta inmuebles al antiguo formato genérico (legacy)
-        System.out.println("Exportando todos los inmuebles a los portales gratuitos (legacy)...");
+        //
+        // Exporta INMUEBLES - antiguo formato genérico (legacy)
+        //
+        System.out.println("Exportando inmuebles a los portales gratuitos (legacy)...");
 
         genericoZip = new ArrayList<>();
         Export2PrtGratuitosLegacy exportGratuitosLegacy = new Export2PrtGratuitosLegacy(bdUtils, portalesPath);
@@ -58,8 +70,10 @@ public class Export2Portales {
 
         ConvertUtils.generarZip(genericoZip, portalesPath + "/alfainmo-inmuebles-legacy.zip");
 
-        // Exporta inmuebles al antiguo formato genérico (legacy)
-        System.out.println("Exportando todos los inmuebles (temporal pisos.com)...");
+        //
+        // Exporta INMUEBLES - al antiguo formato genérico (legacy)
+        //
+        System.out.println("Exportando inmuebles (temporal pisos.com)...");
 
         genericoZip = new ArrayList<>();
         Export2PrtGratuitosOld exportGratuitosLegacyOld = new Export2PrtGratuitosOld(bdUtils, portalesPath);
@@ -68,8 +82,10 @@ public class Export2Portales {
 
         ConvertUtils.generarZip(genericoZip, portalesPath + "/alfainmo-inmuebles-old.zip");
 
-        // Exporta inmuebles al nuevo formato genérico
-        System.out.println("Exportando todos los inmuebles a los portales gratuitos...");
+        //
+        // Exporta INMUEBLES - nuevo formato¡
+        //
+        System.out.println("Exportando inmuebles a los portales gratuitos...");
 
         genericoZip = new ArrayList<>();
         for (MyAgenciaDb myAgenciaDb : getAgencias()) {
@@ -79,8 +95,23 @@ public class Export2Portales {
         }
         ConvertUtils.generarZip(genericoZip, portalesPath + "/alfainmo-inmuebles.zip");
 
-        // Exporta inmuebles a Belbex
-        System.out.println("Exportando todos los inmuebles a Belbex...");
+        //
+        // Exporta INMUEBLES - Inmotools
+        //
+        System.out.println("Exportando inmuebles a Inmotools...");
+
+        genericoZip = new ArrayList<>();
+        for (MyAgenciaDb myAgenciaDb : getAgenciasInmotools()) {
+            Export2PrtGratuitos exportInmotools = new Export2PrtGratuitos(bdUtils, portalesPath, myAgenciaDb);
+            exportInmotools.exportar();
+            genericoZip.add(exportInmotools.getDocumentoAct());
+        }
+        ConvertUtils.generarZip(genericoZip, portalesPath + "/alfainmo-inmotools.zip");
+
+        //
+        // Exporta INMUEBLES - Belbex
+        //
+        System.out.println("Exportando inmuebles a Belbex...");
 
         genericoZip = new ArrayList<>();
         for (MyAgenciaDb myAgenciaDb : getAgencias()) {
@@ -90,8 +121,26 @@ public class Export2Portales {
         }
         ConvertUtils.generarZip(genericoZip, portalesPath + "/alfainmo-belbex.zip");
 
+        //
+        // Exporta INMUEBLES - EnAlquiler / VentaDePisos / MasProfesional
+        //
+        System.out.println("Exportando inmuebles a EnAlquiler...");
+
+        genericoZip = new ArrayList<>();
+        Export2PrtEnAlquiler exportEnAlquiler = new Export2PrtEnAlquiler(bdUtils, portalesPath);
+        exportEnAlquiler.exportar();
+        genericoZip.add(exportEnAlquiler.getDocumentoAct());
+
+        ConvertUtils.generarZip(genericoZip, portalesPath + "/alfainmo-enalquiler.zip");
+
+        //
+        // Eliminar ficheros temporales
+        //
         eliminarTemporales();
 
+        //
+        // Envía fichero a Idealista
+        //
         System.out.println("Enviando fichero a Idealista...");
         exportarIdealista.enviarFtp(ficheroIdealista);
     }
@@ -112,6 +161,15 @@ public class Export2Portales {
      */
     private List<MyAgenciaDb> getAgencias() throws AlfaException {
         return bdUtils.getDataList("SELECT * FROM agencias WHERE pais_id='34' ORDER BY numero_agencia", MyAgenciaDb.class);
+    }
+
+    /**
+     *
+     * @return
+     * @throws AlfaException
+     */
+    private List<MyAgenciaDb> getAgenciasInmotools() throws AlfaException {
+        return bdUtils.getDataList("SELECT * FROM agencias WHERE numero_agencia=1544", MyAgenciaDb.class);
     }
 
 }

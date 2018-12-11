@@ -22,8 +22,10 @@ import java.util.List;
 public class Export2PrtIdealista extends AbstractExport2PrtPago {
 
     private final int maxPisos;
+    private final String pathImg;
 
     /**
+     *
      * @param ficheroFnt
      * @throws AlfaException
      */
@@ -158,7 +160,8 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
 
     public Export2PrtIdealista(BdUtils bdUtils, String pathDestino) throws AlfaException {
         super(bdUtils, pathDestino, "IDE");
-        maxPisos = ConfigUtils.getInstance().getInteger("maxInmueblesIdealista", 1000);
+        this. maxPisos = ConfigUtils.getInstance().getInteger("maxInmueblesIdealista", 1000);
+        this.pathImg = ConfigUtils.getInstance().getString("pathImagenesIdealista");
     }
 
     public AbstractExport2Prt exportar() throws AlfaException {
@@ -301,10 +304,10 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
                             + ((inmuebleInfo.getFieldValue("es_vpo").equals("t")) ? ". El inmueble es VPO." : "")
                             + FmtUtils.htmlToPlainText(descripcion), 2400);
 
-            writer.write(observaciones); // 29
+            writer.write(observaciones.replaceAll("|", "")); // 29
             writer.write("|");
 
-            writer.write("http://www.alfainmo.com/referencia/" + inmueble.getId() + "/?ref=" + inmueble.getNumero_agencia() + "-" + inmueble.getCodigo());
+            writer.write("https://www.alfainmo.com/referencia/" + inmueble.getId() + "/?ref=" + inmueble.getNumero_agencia() + "-" + inmueble.getCodigo());
 
             /*
             if (inmueble.getVideo() != null) {
@@ -356,14 +359,19 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
 
             if (inmuebleInfo.getImagenes() != null) {
                 for (MyImagenDb foto : inmuebleInfo.getImagenes()) {
+
+                    String fotoPath = foto.getPath().replaceAll("/", "--") + "--";
+
                     if (foto.getTipo_imagen_id().equals("07")) {
                         // Es un plano
-                        writer.write("https://admin.alfainmo.com/img_es/" + foto.getPath() + "/" + foto.getFichero());
+                        //writer.write(pathImg + foto.getPath() + "/" + foto.getFichero());
+                        writer.write(pathImg + "o/" + fotoPath + foto.getFichero());
                         writer.write("|13|"); // Plano
 
                     } else {
                         // Es una foto
-                        writer.write("https://admin.alfainmo.com/img_es/" + foto.getPath() + "/g_" + foto.getFichero());
+                        writer.write(pathImg + "x/" + fotoPath + foto.getFichero());
+                        //writer.write(pathImg + foto.getPath() + "/g_" + foto.getFichero());
 
                         if (Integer.parseInt(foto.getTipo_imagen_id()) > 10) {
                             int tipo = Integer.parseInt(foto.getTipo_imagen_id()) - 10;
@@ -1008,7 +1016,7 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
         //
         String sql = "SELECT i.* FROM inmuebles i"
                 + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id='01'"
-                + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('01', '02') AND i.es_venta='t' AND i.pais_id=34"
+                + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('01', '02', '03', '04') AND i.es_venta='t' AND i.pais_id=34"
                 + " AND i.es_opcion_compra <> 't' ORDER BY i.numero_agencia, i.codigo"; // + (contador << 1);
 
         int oficinaAnt = -1, orderBy = 0;
@@ -1039,7 +1047,7 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
         //
         // 10 locales de la oficina 1338
         //
-
+/*
         sql = "SELECT i.* FROM inmuebles i"
             + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id ='01'"
             + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('03', '04') AND i.es_venta='t'"
@@ -1054,14 +1062,14 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
         inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
         for (MyInmuebleDb inmuebleDb : inmueblesDb) {
             result.add(cargarInmuebleInfo(inmuebleDb));
-        }
+        }*/
 
         //
         // Inmuebles en alquiler
         //
         sql = "SELECT i.* FROM inmuebles i"
                 + " LEFT JOIN inmuebles_portal_no ip ON ip.inmueble_id = i.id AND ip.portal_id='05'"
-                + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('01', '02') AND ip.portal_id IS NULL"
+                + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('01', '02', '03', '04') AND ip.portal_id IS NULL"
                 + " AND es_alquiler='t' AND es_opcion_compra <> 't' AND i.pais_id=34 ORDER BY i.numero_agencia, i.codigo";
 
         inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);

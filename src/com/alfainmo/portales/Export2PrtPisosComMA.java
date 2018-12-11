@@ -1,16 +1,10 @@
 package com.alfainmo.portales;
 
-import com.alfainmo.beans.MyAgenciaDb;
-import com.alfainmo.beans.MyImagenDb;
-import com.alfainmo.beans.MyInmuebleDb;
-import com.alfainmo.beans.MyInmuebleDbPortal;
-import com.alfainmo.beans.MyInmuebleInfo;
-import com.alfainmo.beans.MyInmueblePortalDb;
+import com.alfainmo.beans.*;
 import com.alfainmo.extra.AlfaException;
 import com.alfainmo.extra.MyInmueblesAux;
 import com.alfainmo.util.BdUtils;
 import com.alfainmo.util.ConfigUtils;
-import com.alfainmo.util.FmtUtils;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -19,15 +13,15 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
-public class Export2PrtPisosCom extends AbstractExport2PrtPago {
+public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
 
     private final int maxPisos;
     private final MyInmueblesAux tbAux;
     private final List exclusivos, destacados;
     private final String pathImg;
 
-    public Export2PrtPisosCom(BdUtils bdUtils, String pathDestino) throws AlfaException {
-        super(bdUtils, pathDestino, "alfainmo-pisos-com");
+    public Export2PrtPisosComMA(BdUtils bdUtils, String pathDestino) throws AlfaException {
+        super(bdUtils, pathDestino, "alfainmo-pisos-com-ma");
         maxPisos = ConfigUtils.getInstance().getInteger("maxInmueblesPisosCOM", 1500);
         pathImg = ConfigUtils.getInstance().getString("pathImagenes");
         tbAux = new MyInmueblesAux(bdUtils);
@@ -40,6 +34,13 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
         crearDocumento(true);
         try {
             addCabeceraGeneral();
+
+            addCabecera("Agencias");
+            for (MyAgenciaDb agencia : getAgencias()) {
+                generarAgencia(agencia);
+            }
+            addPie();
+
 
             addCabecera("Inmuebles");
             for (MyInmuebleInfo inmueble : getInmuebles(maxPisos)) {
@@ -145,7 +146,7 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
         try {
             writer.write("\r\n<Inmueble>");
 
-            writer.write("<IdInmobiliariaExterna>alfainmo</IdInmobiliariaExterna>");
+            writer.write("<IdInmobiliariaExterna><![CDATA[" + inmuebleDb.getAgencia_id() + "]]></IdInmobiliariaExterna>");
             writer.write(MessageFormat.format("<IdPisoExterno>{0}</IdPisoExterno>", referencia));
 
             writer.write(MessageFormat.format("<TipoInmueble>{0}</TipoInmueble>", convertTipoInmueble(inmueble)));
@@ -539,6 +540,10 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
         }
 
         return result;
+    }
+
+    private List<MyAgenciaDb> getAgencias() throws AlfaException {
+        return bdUtils.getDataList("SELECT * FROM agencias WHERE pais_id='34' ORDER BY numero_agencia", MyAgenciaDb.class);
     }
 
     /**

@@ -115,17 +115,6 @@ public class FmtUtils {
         return str;
     }
 
-    /**
-     * @param str
-     * @return
-     */
-    public static String sinTildes(String str) {
-        char[][] chars = new char[][]{{'·', 'a'}, {'È', 'e'}, {'Ì', 'i'}, {'Û', 'o'}, {'˙', 'u'}, {'Ò', 'n'}, {'¸', 'u'}};
-        for (char[] element : chars) {
-            str = str.replace(element[0], element[1]);
-        }
-        return str;
-    }
 
     /**
      * @param valor
