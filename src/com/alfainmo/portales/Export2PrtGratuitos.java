@@ -32,7 +32,7 @@ public class Export2PrtGratuitos extends AbstractExport2PrtPago {
 
     public Export2PrtGratuitos exportar() throws AlfaException {
 
-        crearDocumento(true);
+        crearDocumento("xml");
         try {
             addCabeceraGeneral();
 

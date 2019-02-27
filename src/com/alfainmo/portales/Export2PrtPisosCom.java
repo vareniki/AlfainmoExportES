@@ -37,7 +37,7 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
 
     public AbstractExport2Prt exportar() throws AlfaException {
 
-        crearDocumento(true);
+        crearDocumento("xml");
         try {
             addCabeceraGeneral();
 

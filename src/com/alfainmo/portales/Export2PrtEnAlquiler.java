@@ -29,7 +29,7 @@ public class Export2PrtEnAlquiler extends AbstractExport2PrtPago {
 
     public AbstractExport2Prt exportar() throws AlfaException {
 
-        crearDocumento(true);
+        crearDocumento("xml");
         try {
             addCabeceraGeneral();
             addCabecera("Inmuebles");

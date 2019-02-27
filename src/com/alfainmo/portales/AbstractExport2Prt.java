@@ -31,7 +31,7 @@ public abstract class AbstractExport2Prt {
     /**
      * @return @throws AlfaException
      */
-    public String generarZip() throws AlfaException {
+    protected String generarZip() throws AlfaException {
         contenidoZip.add(documentoAct);
         return ConvertUtils.generarZip(Collections.unmodifiableList(contenidoZip), archivoZip);
     }
@@ -48,15 +48,16 @@ public abstract class AbstractExport2Prt {
     }
 
     /**
-     * @param xml
+     *
+     * @param ext
      * @param charset
      * @throws AlfaException
      */
-    protected void crearDocumento(boolean xml, String charset) throws AlfaException {
+    protected void crearDocumento(String ext, String charset) throws AlfaException {
 
         contenidoZip.clear();
 
-        String extension = (xml) ? ".xml" : ".txt";
+        String extension = "." +  ext;
         if (prefijo.length() > 8) {
             archivoZip = MessageFormat.format("{0}{1}.zip", pathDestino + "/" + prefijo, extension);
             documentoAct = pathDestino + "/" + prefijo;
@@ -73,7 +74,7 @@ public abstract class AbstractExport2Prt {
             throw new AlfaException(e);
         }
 
-        if (!xml) {
+        if (!ext.equals("xml")) {
             csvPrint = new CSVPrinter(writer, true, true);
             csvPrint.changeDelimiter(';');
         }
@@ -81,11 +82,11 @@ public abstract class AbstractExport2Prt {
     }
 
     /**
-     * @param xml
+     * @param ext
      * @throws AlfaException
      */
-    protected void crearDocumento(boolean xml) throws AlfaException {
-        crearDocumento(xml, "UTF-8");
+    protected void crearDocumento(String ext) throws AlfaException {
+        crearDocumento(ext, "UTF-8");
     }
 
     protected void terminarDocumento() throws AlfaException {

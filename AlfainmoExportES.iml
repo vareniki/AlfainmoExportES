@@ -7,8 +7,17 @@
     </content>
     <orderEntry type="jdk" jdkName="10" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="commons-dbutils-1.6" level="project" />
-    <orderEntry type="library" name="commons-beanutils-1.9.2" level="project" />
-    <orderEntry type="library" name="commons-net-3.5" level="project" />
+    <orderEntry type="library" exported="" name="commons-dbutils-1.6" level="project" />
+    <orderEntry type="library" exported="" name="commons-beanutils-1.9.2" level="project" />
+    <orderEntry type="library" exported="" name="commons-net-3.5" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../java-libs/mysql-connector-java-8.0.13/mysql-connector-java-8.0.13.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

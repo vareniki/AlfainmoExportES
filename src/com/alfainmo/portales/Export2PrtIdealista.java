@@ -25,33 +25,6 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
     private final String pathImg;
 
     /**
-     *
-     * @param ficheroFnt
-     * @throws AlfaException
-     */
-    public void enviarFtp(String ficheroFnt) throws AlfaException {
-
-        ConfigUtils cfg = ConfigUtils.getInstance();
-
-        // EnvÌa el fichero a Idealista
-        FtpUtils ftpUtils = new FtpUtils(
-                cfg.getString("idealista_host"),
-                cfg.getString("idealista_login"),
-                cfg.getString("idealista_password"));
-
-        ftpUtils.login();
-        try {
-            DateFormat fmtDate = new SimpleDateFormat("yyyy-MM-dd");
-            String fileDst = "IDE-" + fmtDate.format(Calendar.getInstance().getTime()) + ".zip";
-            ftpUtils.sendFile(ficheroFnt, fileDst);
-
-        } finally {
-            ftpUtils.logout();
-        }
-
-    }
-
-    /**
      * @param inmueble
      * @return
      */
@@ -166,7 +139,7 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
 
     public AbstractExport2Prt exportar() throws AlfaException {
 
-        crearDocumento(false, "ISO-8859-1");
+        crearDocumento("txt", "ISO-8859-1");
         try {
             for (MyInmuebleInfo inmueble : getInmuebles(maxPisos)) {
                 generarInmueble(inmueble);

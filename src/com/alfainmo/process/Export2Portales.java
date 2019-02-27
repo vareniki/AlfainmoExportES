@@ -43,8 +43,8 @@ public class Export2Portales {
         // Exporta a IDEALISTA
         //
         System.out.println("Exportando inmuebles a Idealista...");
-        Export2PrtIdealista exportarIdealista = new Export2PrtIdealista(bdUtils, portalesPath);
-        String ficheroIdealista = exportarIdealista.exportar().generarZip();
+        Export2PrtIdealistaV6 exportarIdealista = new Export2PrtIdealistaV6(bdUtils, portalesPath);
+        exportarIdealista.exportar();
 
         //
         // Exporta las AGENCIAS
@@ -142,7 +142,7 @@ public class Export2Portales {
         // Envía fichero a Idealista
         //
         System.out.println("Enviando fichero a Idealista...");
-        exportarIdealista.enviarFtp(ficheroIdealista);
+        exportarIdealista.enviarFtp();
     }
 
     /**

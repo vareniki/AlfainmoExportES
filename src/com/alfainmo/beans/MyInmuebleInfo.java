@@ -167,11 +167,11 @@ public class MyInmuebleInfo {
         this.agencia = agencia;
     }
 
-    /**
-     * @param field
-     * @return
-     */
     public String getFieldValue(String field) {
+        return getFieldValue(field, true);
+    }
+
+    public String getFieldValue(String field, boolean ceroIsEmpty) {
 
         if (field == null) {
             return "";
@@ -226,6 +226,10 @@ public class MyInmuebleInfo {
             }
 
         } catch (NullPointerException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            result = "";
+        }
+
+        if (ceroIsEmpty && result.equals("0")) {
             result = "";
         }
 

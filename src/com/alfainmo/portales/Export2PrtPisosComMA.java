@@ -31,7 +31,7 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
 
     public AbstractExport2Prt exportar() throws AlfaException {
 
-        crearDocumento(true);
+        crearDocumento("xml");
         try {
             addCabeceraGeneral();
 
@@ -77,9 +77,12 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
         try {
             writer.write("\r\n<Agencia>");
             writer.write("<IdInmobiliariaExterna><![CDATA[" + agencia.getId() + "]]></IdInmobiliariaExterna>");
+            writer.write("<NombreAgencia><![CDATA[" + agencia.getNombre_agencia() + "]]></NombreAgencia>");
             writer.write("<DireccionAgencia><![CDATA[" + getDireccionAgencia(agencia) + "]]></DireccionAgencia>");
             writer.write("<TelefonoAgencia><![CDATA[" + agencia.getTelefono1_contacto() + "]]></TelefonoAgencia>");
-            writer.write("<FaxAgencia><![CDATA[" + agencia.getFax() + "]]></FaxAgencia>");
+            if (agencia.getFax() != null) {
+                writer.write("<FaxAgencia><![CDATA[" + agencia.getFax() + "]]></FaxAgencia>");
+            }
 
             // Email provisional
             String email = (agencia.getEmail_contacto() != null) ? agencia.getEmail_contacto().replace("ñ", "n") : "";
