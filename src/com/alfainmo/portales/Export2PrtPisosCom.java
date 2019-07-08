@@ -23,7 +23,7 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
 
     private final int maxPisos;
     private final MyInmueblesAux tbAux;
-    private final List exclusivos, destacados;
+    //private final List exclusivos, destacados;
     private final String pathImg;
 
     public Export2PrtPisosCom(BdUtils bdUtils, String pathDestino) throws AlfaException {
@@ -31,8 +31,8 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
         maxPisos = ConfigUtils.getInstance().getInteger("maxInmueblesPisosCOM", 1500);
         pathImg = ConfigUtils.getInstance().getString("pathImagenes");
         tbAux = new MyInmueblesAux(bdUtils);
-        exclusivos = new ArrayList<>();
-        destacados = new ArrayList<>();
+        //exclusivos = new ArrayList<>();
+        //destacados = new ArrayList<>();
     }
 
     public AbstractExport2Prt exportar() throws AlfaException {
@@ -385,6 +385,7 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
             writer.write("<EnergiaEmisionCategoria>NO INDICADO</EnergiaEmisionCategoria>");
 
             // Exclusivos
+            /*
             if (!exclusivos.contains(inmuebleDb.getAgencia_id())) {
 
                 for (MyInmueblePortalDb portal : inmueble.getPortales()) {
@@ -399,8 +400,9 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
                     }
                 }
             }
-
+            */
             // Destacados
+            /*
             if (!destacados.contains(inmuebleDb.getAgencia_id())) {
 
                 for (MyInmueblePortalDb portal : inmueble.getPortales()) {
@@ -414,18 +416,35 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
                     }
                 }
             }
-
+            */
             if (inmuebleDb.getVideo() != null && !inmuebleDb.getVideo().isEmpty()) {
 
                 String videos[] = inmuebleDb.getVideo().split("\\n");
 
+                writer.write("<VideosExternos>");
                 int i = 1;
                 for (String video : videos) {
                     if (video.toLowerCase().startsWith("http") && !video.toLowerCase().contains(",pvi")) {
-                        writer.write("<VideosExternos><Video" + i + "><![CDATA[" + video + "]]></Video" + i + "></VideosExternos>");
+                        writer.write("<Video" + i + "><![CDATA[" + video + "]]></Video" + i + ">");
                         i++;
                     }
                 }
+                writer.write("</VideosExternos>");
+            }
+
+            if (inmuebleDb.getTour_virtual() != null && !inmuebleDb.getTour_virtual().isEmpty()) {
+
+                String tours[] = inmuebleDb.getTour_virtual().split("\\n");
+
+                writer.write("<ToursVirtuales>");
+                int i = 1;
+                for (String tour : tours) {
+                    if (tour.toLowerCase().startsWith("http") && !tour.toLowerCase().contains(",pvi")) {
+                        writer.write("<TourVirtual" + i + "><![CDATA[" + tour + "]]></TourVirtual" + i + ">");
+                        i++;
+                    }
+                }
+                writer.write("</ToursVirtuales>");
             }
 
             writer.write("\n</Inmueble>");
@@ -434,27 +453,6 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
             throw new AlfaException(ex);
         }
 
-    /*
-
-     <CarpinteriaInterior_tiene>0 no, 1 sí<!-- Numérico --></CarpinteriaInterior_tiene>
-     <CarpinteriaInterior_comentario>Comentario de la Característica<!-- Texto --></CarpinteriaInterior_comentario>
-     <CarpinteriaExterior_tiene>0 no, 1 sí<!-- Numérico --></CarpinteriaExterior_tiene>
-     <CarpinteriaExterior_comentario>Comentario de la Característica<!-- Texto --></CarpinteriaExterior_comentario>
-
-
-     <SuministroAgua_tiene>0 no, 1 sí<!-- Numérico --></SuministroAgua_tiene>
-     <SuministroAgua_comentario>Comentario de la Característica<!-- Texto --></SuministroAgua_comentario>
-
-     <Escaparate_tiene>0 no, 1 sí<!-- Numérico --></Escaparate_tiene>
-     <Escaparate_comentario>Comentario de la Característica<!-- Texto --></Escaparate_comentario>
-     <PlantaBaja_tiene>0 no, 1 sí<!-- Numérico --></PlantaBaja_tiene>
-     <PlantaBaja_comentario>Comentario de la Característica<!-- Texto --></PlantaBaja_comentario>
-
-     <PrestacionEnergetica_tiene>0 no, 1 sí<!-- Numérico --></PrestacionEnergetica_tiene>
-     <PrestacionEnergetica_comentario>Comentario de la Característica<!-- Texto --></PrestacionEnergetica_comentario>
-     <CalificacionEmisionesEnergeticas>Valores de la A - G, EN TRAMITE, NO DISPONIBLE<!-- Texto --></CalificacionEmisionesEnergeticas>
-		
-     */
     }
 
     protected void addCabeceraGeneral() throws AlfaException {
@@ -549,10 +547,16 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
         List<MyInmuebleInfo> result = new ArrayList<>();
 
         // Carga los inmuebles que están dados de alta tan sólo, y que están captados
-        String sql = "SELECT DISTINCT i.* FROM inmuebles i"
-                + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id IN ('03', '07', '08')"
-                + " WHERE i.web IN('t', 'i') AND i.pais_id=34 ORDER BY i.numero_agencia, i.codigo LIMIT " + (contador << 1);
+        String sql = "SELECT i.* FROM inmuebles i"
+                + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id = '03'"
+                + " WHERE i.web IN('t', 'i') AND i.pais_id=34 ORDER BY i.numero_agencia, i.codigo";
 
+        List<MyInmuebleDbPortal> inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
+        for (MyInmuebleDb inmuebleDb : inmueblesDb) {
+            result.add(cargarInmuebleInfo(inmuebleDb));
+        }
+
+        /*
         int oficinaAnt = -1, orderBy = 0;
 
         List<MyInmuebleDbPortal> inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
@@ -578,6 +582,7 @@ public class Export2PrtPisosCom extends AbstractExport2PrtPago {
                 break;
             }
         }
+        */
 
         return result;
     }

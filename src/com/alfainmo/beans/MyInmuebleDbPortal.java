@@ -5,6 +5,8 @@ package com.alfainmo.beans;
  */
 public class MyInmuebleDbPortal extends MyInmuebleDb implements Comparable<MyInmuebleDbPortal> {
     private int orderBy;
+    private String exclusivo;
+    private String destacado;
 
     public int getOrderBy() {
         return orderBy;
@@ -12,6 +14,22 @@ public class MyInmuebleDbPortal extends MyInmuebleDb implements Comparable<MyInm
 
     public void setOrderBy(int orderBy) {
         this.orderBy = orderBy;
+    }
+
+    public String getExclusivo() {
+        return exclusivo;
+    }
+
+    public void setExclusivo(String exclusivo) {
+        this.exclusivo = exclusivo;
+    }
+
+    public String getDestacado() {
+        return destacado;
+    }
+
+    public void setDestacado(String destacado) {
+        this.destacado = destacado;
     }
 
     @Override

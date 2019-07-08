@@ -17,7 +17,6 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
 
     private final int maxPisos;
     private final MyInmueblesAux tbAux;
-    private final List exclusivos, destacados;
     private final String pathImg;
 
     public Export2PrtPisosComMA(BdUtils bdUtils, String pathDestino) throws AlfaException {
@@ -25,8 +24,6 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
         maxPisos = ConfigUtils.getInstance().getInteger("maxInmueblesPisosCOM", 1500);
         pathImg = ConfigUtils.getInstance().getString("pathImagenes");
         tbAux = new MyInmueblesAux(bdUtils);
-        exclusivos = new ArrayList<>();
-        destacados = new ArrayList<>();
     }
 
     public AbstractExport2Prt exportar() throws AlfaException {
@@ -102,6 +99,11 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
      */
     protected void generarInmueble(MyInmuebleInfo inmueble) throws AlfaException {
 
+        String tipoInmueble = convertTipoInmueble(inmueble);
+        if (tipoInmueble == null) {
+            return;
+        }
+
         MyInmuebleDb inmuebleDb = inmueble.getInmuebleDb();
 
         int operacion = 0, precio = 0, precioVenta = 0;
@@ -152,7 +154,7 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
             writer.write("<IdInmobiliariaExterna><![CDATA[" + inmuebleDb.getAgencia_id() + "]]></IdInmobiliariaExterna>");
             writer.write(MessageFormat.format("<IdPisoExterno>{0}</IdPisoExterno>", referencia));
 
-            writer.write(MessageFormat.format("<TipoInmueble>{0}</TipoInmueble>", convertTipoInmueble(inmueble)));
+            writer.write(MessageFormat.format("<TipoInmueble>{0}</TipoInmueble>", tipoInmueble));
 
             writer.write(MessageFormat.format("<TipoOperacion>{0}</TipoOperacion>", "" + operacion));
             writer.write(MessageFormat.format("<PrecioEur>{0}</PrecioEur>", "" + precio));
@@ -303,8 +305,13 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
                 writer.write("<PuertaBlindada_tiene>1</PuertaBlindada_tiene>");
             }
 
+            if (inmueble.getFieldValue("zona_carga_descarga").equals("t")) {
+                writer.write("<MuelleDeCarga_tiene>1</MuelleDeCarga_tiene>");
+            }
+
             if (inmueble.getFieldValue("con_videovigilancia").equals("t")
                     || inmueble.getFieldValue("con_vigilancia_24h").equals("t")
+                    || inmueble.getFieldValue("vigilado_24h").equals("t")
                     || inmueble.getFieldValue("con_camaras_seguridad").equals("t")) {
 
                 writer.write("<SistemaSeguridad_tiene>1</SistemaSeguridad_tiene>");
@@ -313,7 +320,9 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
                 if (inmueble.getFieldValue("con_videovigilancia").equals("t")) {
                     sb.append(", con videovigilancia");
                 }
-                if (inmueble.getFieldValue("con_vigilancia_24h").equals("t")) {
+                if (inmueble.getFieldValue("con_vigilancia_24h").equals("t")
+                    || inmueble.getFieldValue("vigilado_24h").equals("t")) {
+
                     sb.append(", vigilancia 24h");
                 }
                 if (inmueble.getFieldValue("con_camaras_seguridad").equals("t")) {
@@ -348,7 +357,7 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
                 }
             }
 
-            if (inmueble.getFieldValue("calificacion_energetica_id") != null) {
+            if (!inmueble.getFieldValue("calificacion_energetica_id").isEmpty()) {
                 String result;
                 switch (inmueble.getFieldValue("calificacion_energetica_id")) {
                     case "00":
@@ -389,47 +398,48 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
             writer.write("<EnergiaEmisionCategoria>NO INDICADO</EnergiaEmisionCategoria>");
 
             // Exclusivos
-            if (!exclusivos.contains(inmuebleDb.getAgencia_id())) {
+            if (((MyInmuebleDbPortal)inmueble.getInmuebleDb()).getExclusivo().equals("t")) {
+                writer.write("<Exclusivo>1</Exclusivo>");
+                writer.write("<EtiquetaExclusivo>2</EtiquetaExclusivo>");
 
-                for (MyInmueblePortalDb portal : inmueble.getPortales()) {
-                    if (portal.getPortal_id().equals("07")) {
-                        writer.write("<Exclusivo>1</Exclusivo>");
-                        writer.write("<EtiquetaExclusivo>15</EtiquetaExclusivo>");
-
-                        exclusivos.add(inmuebleDb.getAgencia_id());
-                        System.out.println("Exclusivo Pisos.com " + inmuebleDb.getNumero_agencia() + "/" + inmuebleDb.getCodigo() + ".");
-
-                        break;
-                    }
-                }
+                System.out.println("Exclusivo Pisos.com " + inmuebleDb.getNumero_agencia() + "/" + inmuebleDb.getCodigo() + ".");
             }
 
             // Destacados
-            if (!destacados.contains(inmuebleDb.getAgencia_id())) {
+            if (((MyInmuebleDbPortal)inmueble.getInmuebleDb()).getDestacado().equals("t")) {
+                writer.write("<Destacado>1</Destacado>");
 
-                for (MyInmueblePortalDb portal : inmueble.getPortales()) {
-                    if (portal.getPortal_id().equals("08")) {
-                        writer.write("<Destacado>1</Destacado>");
-
-                        destacados.add(inmuebleDb.getAgencia_id());
-                        System.out.println("Destacado Pisos.com " + inmuebleDb.getNumero_agencia() + "/" + inmuebleDb.getCodigo() + ".");
-
-                        break;
-                    }
-                }
+                System.out.println("Destacado Pisos.com " + inmuebleDb.getNumero_agencia() + "/" + inmuebleDb.getCodigo() + ".");
             }
 
             if (inmuebleDb.getVideo() != null && !inmuebleDb.getVideo().isEmpty()) {
 
                 String videos[] = inmuebleDb.getVideo().split("\\n");
 
+                writer.write("<VideosExternos>");
                 int i = 1;
                 for (String video : videos) {
                     if (video.toLowerCase().startsWith("http") && !video.toLowerCase().contains(",pvi")) {
-                        writer.write("<VideosExternos><Video" + i + "><![CDATA[" + video + "]]></Video" + i + "></VideosExternos>");
+                        writer.write("<Video" + i + "><![CDATA[" + video + "]]></Video" + i + ">");
                         i++;
                     }
                 }
+                writer.write("</VideosExternos>");
+            }
+
+            if (inmuebleDb.getTour_virtual() != null && !inmuebleDb.getTour_virtual().isEmpty()) {
+
+                String tours[] = inmuebleDb.getTour_virtual().split("\\n");
+
+                writer.write("<ToursVirtuales>");
+                int i = 1;
+                for (String tour : tours) {
+                    if (tour.toLowerCase().startsWith("http") && !tour.toLowerCase().contains(",pvi")) {
+                        writer.write("<TourVirtual" + i + "><![CDATA[" + tour + "]]></TourVirtual" + i + ">");
+                        i++;
+                    }
+                }
+                writer.write("</ToursVirtuales>");
             }
 
             writer.write("\n</Inmueble>");
@@ -438,27 +448,6 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
             throw new AlfaException(ex);
         }
 
-    /*
-
-     <CarpinteriaInterior_tiene>0 no, 1 sí<!-- Numérico --></CarpinteriaInterior_tiene>
-     <CarpinteriaInterior_comentario>Comentario de la Característica<!-- Texto --></CarpinteriaInterior_comentario>
-     <CarpinteriaExterior_tiene>0 no, 1 sí<!-- Numérico --></CarpinteriaExterior_tiene>
-     <CarpinteriaExterior_comentario>Comentario de la Característica<!-- Texto --></CarpinteriaExterior_comentario>
-
-
-     <SuministroAgua_tiene>0 no, 1 sí<!-- Numérico --></SuministroAgua_tiene>
-     <SuministroAgua_comentario>Comentario de la Característica<!-- Texto --></SuministroAgua_comentario>
-
-     <Escaparate_tiene>0 no, 1 sí<!-- Numérico --></Escaparate_tiene>
-     <Escaparate_comentario>Comentario de la Característica<!-- Texto --></Escaparate_comentario>
-     <PlantaBaja_tiene>0 no, 1 sí<!-- Numérico --></PlantaBaja_tiene>
-     <PlantaBaja_comentario>Comentario de la Característica<!-- Texto --></PlantaBaja_comentario>
-
-     <PrestacionEnergetica_tiene>0 no, 1 sí<!-- Numérico --></PrestacionEnergetica_tiene>
-     <PrestacionEnergetica_comentario>Comentario de la Característica<!-- Texto --></PrestacionEnergetica_comentario>
-     <CalificacionEmisionesEnergeticas>Valores de la A - G, EN TRAMITE, NO DISPONIBLE<!-- Texto --></CalificacionEmisionesEnergeticas>
-		
-     */
     }
 
     protected void addCabeceraGeneral() throws AlfaException {
@@ -538,7 +527,12 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
                 result = "Nave industrial";
                 break;
             case "08": // Otros
-                result = "Otros";
+                if (inmuebleInfo.getOtroDb().getTipo_otro_id() != null && inmuebleInfo.getOtroDb().getTipo_otro_id().equals("01")) {
+                    result = "Trastero";
+                } else {
+                    result = null;
+                }
+
                 break;
         }
 
@@ -557,34 +551,15 @@ public class Export2PrtPisosComMA extends AbstractExport2PrtPago {
         List<MyInmuebleInfo> result = new ArrayList<>();
 
         // Carga los inmuebles que están dados de alta tan sólo, y que están captados
-        String sql = "SELECT DISTINCT i.* FROM inmuebles i"
-                + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id IN ('03', '07', '08')"
-                + " WHERE i.web IN('t', 'i') AND i.pais_id=34 ORDER BY i.numero_agencia, i.codigo LIMIT " + (contador << 1);
+        String sql = "SELECT i.*, IF(ipe.inmueble_id IS NULL, 'f', 't') AS exclusivo, IF(ipd.inmueble_id IS NULL, 'f', 't') AS destacado FROM inmuebles i"
+                + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id = '03'"
+                + " LEFT JOIN inmuebles_portal ipe ON ipe.inmueble_id = i.id AND ipe.portal_id = '07'"
+                + " LEFT JOIN inmuebles_portal ipd ON ipd.inmueble_id = i.id AND ipd.portal_id = '08'"
+                + " WHERE i.web IN('t', 'i') AND i.pais_id=34 ORDER BY i.numero_agencia, i.codigo";
 
-        int oficinaAnt = -1, orderBy = 0;
-
-        List<MyInmuebleDbPortal> inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
-        for (MyInmuebleDbPortal inmuebleDb : inmueblesDb) {
-
-            if (inmuebleDb.getNumero_agencia() != oficinaAnt) {
-                oficinaAnt = inmuebleDb.getNumero_agencia();
-                orderBy = 0;
-            }
-            inmuebleDb.setOrderBy(orderBy);
-
-            orderBy++;
-        }
-
-        Collections.sort(inmueblesDb);
-
-        for (MyInmuebleDb inmuebleDb : inmueblesDb) {
+        List<MyInmuebleDbPortal> inmueblesDbPortal = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
+        for (MyInmuebleDbPortal inmuebleDb : inmueblesDbPortal) {
             result.add(cargarInmuebleInfo(inmuebleDb));
-
-            contador--;
-
-            if (contador == 0) {
-                break;
-            }
         }
 
         return result;

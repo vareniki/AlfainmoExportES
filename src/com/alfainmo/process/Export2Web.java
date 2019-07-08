@@ -219,7 +219,11 @@ public class Export2Web extends AbstractExport2Web {
             bdDst.commit();
 
         } catch (InvocationTargetException | IllegalAccessException e) {
-            throw new AlfaException(e);
+
+            bdDst.rollback();
+
+            System.out.println("Error en agencia " + agenciaDb.getNumero_agencia());
+            e.printStackTrace();
         }
 
         if (agenciaDb.getSolo_central() != null && agenciaDb.getSolo_central().equalsIgnoreCase("t")
@@ -230,9 +234,9 @@ public class Export2Web extends AbstractExport2Web {
 
         final SimpleDateFormat dt = new SimpleDateFormat("yyyyMMdd");
 
-        // Carga los inmuebles que est·n dados de alta tan sÛlo, y que est·n captados
+        // Carga los inmuebles que estén dados de alta tan sÛlo, y que est·n captados
         String sql = "SELECT * FROM inmuebles WHERE agencia_id=%d"
-                + " AND fecha_captacion IS NOT NULL AND fecha_baja IS NULL AND motivo_baja_id IS NULL AND estado_inmueble_id='02'";
+                + " AND fecha_captacion IS NOT NULL AND fecha_baja IS NULL AND motivo_baja_id IS NULL AND estado_inmueble_id='02' ABD ";
 
         List<PgInmuebleDb> inmueblesDb = bdFnt.getDataList(String.format(sql, agenciaDb.getId()), PgInmuebleDb.class);
         for (PgInmuebleDb inmuebleDb : inmueblesDb) {
@@ -452,9 +456,7 @@ public class Export2Web extends AbstractExport2Web {
 
             } catch (AlfaException | InvocationTargetException | IllegalAccessException e) {
                 bdDst.rollback();
-
                 System.out.println("Error en referencia " + inmuebleDb.getNumero_agencia() + "/" + inmuebleDb.getCodigo());
-
                 e.printStackTrace();
             }
         }

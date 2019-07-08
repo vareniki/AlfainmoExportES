@@ -1018,26 +1018,6 @@ public class Export2PrtIdealista extends AbstractExport2PrtPago {
         }
 
         //
-        // 10 locales de la oficina 1338
-        //
-/*
-        sql = "SELECT i.* FROM inmuebles i"
-            + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id ='01'"
-            + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('03', '04') AND i.es_venta='t'"
-            + " AND i.es_opcion_compra <> 't' AND i.numero_agencia=1338 AND i.pais_id=34"
-            + " UNION "
-            + " SELECT i.* FROM inmuebles i "
-            + " LEFT JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id ='05'"
-            + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('03', '04') AND i.es_alquiler='t' AND ip.portal_id IS NULL"
-            + " AND i.es_opcion_compra <> 't' AND i.numero_agencia=1338 AND i.pais_id=34"
-            + " ORDER BY numero_agencia, codigo LIMIT 10";
-
-        inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
-        for (MyInmuebleDb inmuebleDb : inmueblesDb) {
-            result.add(cargarInmuebleInfo(inmuebleDb));
-        }*/
-
-        //
         // Inmuebles en alquiler
         //
         sql = "SELECT i.* FROM inmuebles i"

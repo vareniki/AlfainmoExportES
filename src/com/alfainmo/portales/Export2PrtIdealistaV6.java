@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -196,6 +195,7 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
                     switch (inmueble.getInmuebleDb().getTipo_inmueble_id()) {
                         case "05":
                         case "06":
+                        case "08":
                             areaTotal = Integer.parseInt(inmueble.getFieldValue("area_total"));
                             break;
                         default:
@@ -206,7 +206,9 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
                     areaTotal = 0;
                 }
 
+
                 if (areaTotal == 0) {
+                    System.out.println("Area total de referencia " + inmueble.getInmuebleDb().getNumero_agencia() + "/" + inmueble.getInmuebleDb().getCodigo() + " es 0.");
                     continue;
                 }
 
@@ -216,7 +218,6 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
 
                 generarInmueble(inmueble);
                 i++;
-
             }
 
             writer.write("] }");
@@ -338,9 +339,34 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
             case "06": // Terreno
                 setLandProperties(inmuebleInfo, features);
                 break;
+            case "08": // Trasteros
+                setStorageProperties(inmuebleInfo, features);
+                break;
         }
 
         return features;
+    }
+
+    private void setStorageProperties(MyInmuebleInfo inmuebleInfo, JSONObject features) {
+        MyOtroDb otroDb = inmuebleInfo.getOtroDb();
+
+        features.put("featuresType", "storage");
+        features.put("featuresAreaConstructed", otroDb.getArea_total());
+
+        setBooleanFeatures(new String[][]{
+                {"accesible_24h", "featuresAccess24h"},
+                {"zona_carga_descarga", "featuresLoadingDock"},
+                {"vigilado_24h", "featuresSecurity24h"}
+        }, inmuebleInfo, features);
+
+        try {
+            Integer anioConstruccion = Integer.parseInt(inmuebleInfo.getFieldValue("anio_construccion"));
+            if (anioConstruccion >= 1700 && anioConstruccion < 2100) {
+                features.put("featuresBuiltYear", anioConstruccion);
+            }
+
+        } catch (NumberFormatException ex) {
+        }
     }
 
     private void setLandProperties(MyInmuebleInfo inmuebleInfo, JSONObject features) {
@@ -619,11 +645,13 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
 
             switch (inmuebleInfo.getChaletDb().getTipo_chalet_id()) {
                 case "02":
-                case "04":
-                    features.put("featuresType", "house_semidetached");
+                    features.put("featuresType", "house_terraced");
                     break;
                 case "03":
                     features.put("featuresType", "house_independent");
+                    break;
+                case "04":
+                    features.put("featuresType", "house_semidetached");
                     break;
                 default:
                     features.put("featuresType", "house");
@@ -753,11 +781,16 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
         }
 
         // Parking
-        if (!inmuebleInfo.getFieldValue("plazas_parking").isEmpty()
-                || inmuebleInfo.getFieldValue("con_parking").equals("t")) {
-            features.put("featuresParkingAvailable", true);
-        }
+        if (!inmuebleInfo.getFieldValue("plazas_parking").isEmpty()) {
+            try {
+                Integer plazasParking = Integer.valueOf(inmuebleInfo.getFieldValue("plazas_parking"));
+                if (plazasParking > 0) {
+                    features.put("featuresParkingAvailable", true);
+                }
 
+            } catch (NumberFormatException e) {
+            }
+        }
         // Tipo de calefacción
         switch (inmuebleInfo.getFieldValue("tipo_calefaccion_id")) {
             case "01":
@@ -823,7 +856,40 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
         address.put("addressStreetName", inmueble.getNombre_calle());
         address.put("addressStreetNumber", "" + inmueble.getNumero_calle());
         //address.put("addressBlock", "");
-        //address.put("addressFloor", "");
+
+        String piso = inmuebleInfo.getFieldValue("piso");
+        if (!piso.isEmpty()) {
+            String addressFloor=null;
+            switch (piso) {
+                case "00": // Bajo
+                    addressFloor = "bj";
+                    break;
+                case "X0": // Entreplanta
+                    addressFloor = "en";
+                    break;
+                case "X1": // Semisótano
+                    addressFloor = "ss";
+                    break;
+                case "X2": // Sótano
+                    addressFloor = "st";
+                    break;
+                default:
+                    try {
+                        Integer iPiso = Integer.valueOf(piso).intValue();
+                        if (iPiso >= 1) {
+                            addressFloor = "" + iPiso;
+                        }
+                    } catch (NumberFormatException e) {
+                    }
+                    break;
+            }
+            if (addressFloor != null) {
+                address.put("addressFloor", addressFloor);
+            }
+
+        }
+
+        //
         //address.put("addressStair", "");
         //address.put("addressDoor", inmuebleInfo.getFieldValue("puerta"));
         //address.put("addressUrbanization", "");
@@ -889,24 +955,45 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
         //
         String sql = "SELECT i.* FROM inmuebles i"
                 + " LEFT JOIN inmuebles_portal_no ip ON ip.inmueble_id = i.id AND ip.portal_id='05'"
-                + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('01', '02', '03', '04', '05', '06', '07') AND ip.portal_id IS NULL"
+                + " WHERE i.web IN ('t', 'i') AND ip.portal_id IS NULL"
                 + " AND es_alquiler='t' AND es_opcion_compra <> 't' AND i.pais_id=34 ORDER BY i.numero_agencia, i.codigo";
 
         List<MyInmuebleDbPortal> inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
         for (MyInmuebleDbPortal inmuebleDb : inmueblesDb) {
-            inmuebleDb.setEs_venta("f");
-            inmuebleDb.setPrecio_venta(0);
-            result.add(cargarInmuebleInfo(inmuebleDb));
 
-            contador--;
+            boolean quitar = false;
+
+            // Si es de tipo "otro" y no es trastero, continúa
+            MyInmuebleInfo myInmuebleInfo = cargarInmuebleInfo(inmuebleDb);
+            if (inmuebleDb.getTipo_inmueble_id().equals("08")) {
+
+                if (myInmuebleInfo.getOtroDb() != null
+                        && (myInmuebleInfo.getOtroDb().getTipo_otro_id() == null
+                        || !myInmuebleInfo.getOtroDb().getTipo_otro_id().equals("01"))) {
+
+                    quitar = true;
+
+                } else {
+                    System.out.println("Exportando trastero " + myInmuebleInfo.getInmuebleDb().getNumero_agencia() + "/" + myInmuebleInfo.getInmuebleDb().getCodigo());
+                }
+            }
+
+            if (!quitar) {
+                inmuebleDb.setEs_venta("f");
+                inmuebleDb.setPrecio_venta(0);
+                result.add(myInmuebleInfo);
+
+                contador--;
+            }
+
         }
 
         //
-        // Viviendas dadas de alta, captadas y en venta
+        // VENTA
         //
         sql = "SELECT i.* FROM inmuebles i"
                 + " JOIN inmuebles_portal ip ON ip.inmueble_id = i.id AND ip.portal_id='01'"
-                + " WHERE i.web IN ('t', 'i') AND i.tipo_inmueble_id IN ('01', '02', '03', '04', '05', '06', '07') AND i.es_venta='t' AND i.pais_id=34"
+                + " WHERE i.web IN ('t', 'i') AND i.es_venta='t' AND i.pais_id=34 AND i.es_promocion <> 't'"
                 + " AND i.es_opcion_compra <> 't' ORDER BY i.numero_agencia, i.codigo";
 
         int oficinaAnt = -1, orderBy = 0;
@@ -914,18 +1001,43 @@ public class Export2PrtIdealistaV6 extends AbstractExport2PrtPago {
         inmueblesDb = bdUtils.getDataList(sql, MyInmuebleDbPortal.class);
         for (MyInmuebleDbPortal inmuebleDb : inmueblesDb) {
 
+            boolean quitar = false;
+
+            // Si es de tipo "otro" y no es trastero, continúa
+            if (inmuebleDb.getTipo_inmueble_id().equals("08")) {
+                MyInmuebleInfo myInmuebleInfo = cargarInmuebleInfo(inmuebleDb);
+
+                if (myInmuebleInfo.getOtroDb() != null
+                        && (myInmuebleInfo.getOtroDb().getTipo_otro_id() == null
+                        || !myInmuebleInfo.getOtroDb().getTipo_otro_id().equals("01"))) {
+
+                    quitar = true;
+
+                } else {
+                    System.out.println("Exportando trastero " + myInmuebleInfo.getInmuebleDb().getNumero_agencia() + "/" + myInmuebleInfo.getInmuebleDb().getCodigo());
+                }
+            }
+
             if (inmuebleDb.getNumero_agencia() != oficinaAnt) {
                 oficinaAnt = inmuebleDb.getNumero_agencia();
                 orderBy = 0;
             }
-            inmuebleDb.setOrderBy(orderBy);
 
-            orderBy++;
+            if (quitar) {
+                inmuebleDb.setOrderBy(-1);
+            } else {
+                inmuebleDb.setOrderBy(orderBy);
+                orderBy++;
+            }
+
         }
 
         Collections.sort(inmueblesDb);
 
-        for (MyInmuebleDb inmuebleDb : inmueblesDb) {
+        for (MyInmuebleDbPortal inmuebleDb : inmueblesDb) {
+            if (inmuebleDb.getOrderBy() == -1 ) {
+                continue;
+            }
             result.add(cargarInmuebleInfo(inmuebleDb));
 
             contador--;

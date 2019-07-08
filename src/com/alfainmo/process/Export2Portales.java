@@ -28,10 +28,10 @@ public class Export2Portales {
     public void exportarInmuebles() throws AlfaException {
 
         // Exporta inmuebles a Pisos.com
-        System.out.println("Exportando inmuebles a Pisos.com...");
+        //System.out.println("Exportando inmuebles a Pisos.com...");
 
-        Export2PrtPisosCom exportarPisos = new Export2PrtPisosCom(bdUtils, portalesPath);
-        exportarPisos.exportar();
+        //Export2PrtPisosCom exportarPisos = new Export2PrtPisosCom(bdUtils, portalesPath);
+        //exportarPisos.exportar();
 
         // Exporta inmuebles a Pisos.com multiagencia
         System.out.println("Exportando inmuebles a Pisos.com multiagencia...");
@@ -169,7 +169,7 @@ public class Export2Portales {
      * @throws AlfaException
      */
     private List<MyAgenciaDb> getAgenciasInmotools() throws AlfaException {
-        return bdUtils.getDataList("SELECT * FROM agencias WHERE numero_agencia=1544", MyAgenciaDb.class);
+        return bdUtils.getDataList("SELECT * FROM agencias WHERE numero_agencia IN (1544,1901)", MyAgenciaDb.class);
     }
 
 }

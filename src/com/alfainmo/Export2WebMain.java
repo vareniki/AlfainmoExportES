@@ -45,16 +45,7 @@ public class Export2WebMain {
     public Export2WebMain(String[] args) throws AlfaException, JSchException {
 
         ConfigUtils cfg = ConfigUtils.getInstance();
-/*
-        Session session = doSshTunnel(
-                cfg.getString("fnt_sshUser"),
-                cfg.getString("fnt_sshPass"),
-                cfg.getString("fnt_sshHost"),
-                Integer.parseInt(cfg.getString("fnt_sshPort")),
-                cfg.getString("fnt_sshRemoteHost"),
-                Integer.parseInt(cfg.getString("fnt_sshLocalPort")),
-                Integer.parseInt(cfg.getString("fnt_sshRemotePort")));
-*/
+
         BdUtils bdFnt = new BdUtils(
                 cfg.getString("fnt_jdbcDriver"), cfg.getString("fnt_jdbcURL"),
                 cfg.getString("fnt_jdbcUser"), cfg.getString("fnt_jdbcPass"));
@@ -84,7 +75,6 @@ public class Export2WebMain {
             }
 
             // Portales
-
             if (args.length == 0 || (args.length == 1 && args[0].equalsIgnoreCase("portales"))) {
 
                 Export2Portales exportPortales = new Export2Portales(bdDst);
@@ -94,7 +84,6 @@ public class Export2WebMain {
         } finally {
             bdFnt.disconnect();
             bdDst.disconnect();
-            //session.disconnect();
         }
 
     }
